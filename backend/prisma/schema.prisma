@@ -1,0 +1,123 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  SUPER_ADMIN
+  COMPANY_ADMIN
+  DISPATCHER
+  DRIVER
+}
+
+enum ShipmentStatus {
+  PENDING
+  IN_TRANSIT
+  DELIVERED
+  DELAYED
+  CANCELLED
+}
+
+enum DriverStatus {
+  AVAILABLE
+  ON_ROUTE
+  OFF_DUTY
+}
+
+enum VehicleStatus {
+  ACTIVE
+  MAINTENANCE
+  INACTIVE
+}
+
+model Company {
+  id        String     @id @default(uuid())
+  name      String
+  users     User[]
+  drivers   Driver[]
+  vehicles  Vehicle[]
+  shipments Shipment[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model User {
+  id             String         @id @default(uuid())
+  companyId      String?
+  company        Company?       @relation(fields: [companyId], references: [id])
+  email          String         @unique
+  passwordHash   String?
+  provider       String?
+  providerId     String?
+  role           Role           @default(DISPATCHER)
+  firstName      String
+  lastName       String
+  avatarUrl      String?
+  preferences    Json?
+  driver         Driver?
+  notifications  Notification[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model Driver {
+  id        String       @id @default(uuid())
+  companyId String?
+  company   Company?     @relation(fields: [companyId], references: [id])
+  userId    String       @unique
+  user      User         @relation(fields: [userId], references: [id])
+  contact   String
+  status    DriverStatus @default(AVAILABLE)
+  vehicleId String?      @unique
+  vehicle   Vehicle?     @relation(fields: [vehicleId], references: [id])
+  shipments Shipment[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+model Vehicle {
+  id           String        @id @default(uuid())
+  companyId    String?
+  company      Company?      @relation(fields: [companyId], references: [id])
+  licensePlate String        @unique
+  type         String
+  capacity     Float
+  status       VehicleStatus @default(ACTIVE)
+  driver       Driver?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Shipment {
+  id               String         @id @default(uuid())
+  companyId        String?
+  company          Company?       @relation(fields: [companyId], references: [id])
+  trackingId       String         @unique
+  origin           String
+  originLat        Float
+  originLng        Float
+  destination      String
+  destinationLat   Float
+  destinationLng   Float
+  status           ShipmentStatus @default(PENDING)
+  expectedDelivery DateTime
+  actualDelivery   DateTime?
+  cost             Float          @default(0)
+  driverId         String?
+  driver           Driver?        @relation(fields: [driverId], references: [id])
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
