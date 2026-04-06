@@ -19,7 +19,9 @@ export function Sidebar() {
     { name: "Settings", href: "/settings", icon: Settings, roles: ["SUPER_ADMIN", "COMPANY_ADMIN"] },
   ];
 
-  const filteredItems = navItems.filter(item => item.roles.includes(role));
+  const filteredItems = role
+    ? navItems.filter((item) => item.roles.includes(role))
+    : [];
 
   return (
     <div className="flex bg-card/40 backdrop-blur-3xl border-r border-white/5 w-64 h-full flex-col justify-between py-6 transition-all duration-300">
