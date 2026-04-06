@@ -2,9 +2,11 @@ import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 
-const handler = NextAuth({
-  providers: [
-    CredentialsProvider({
+const googleClientId = process.env.GOOGLE_CLIENT_ID;
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+
+const providers = [
+  CredentialsProvider({
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "text" },
@@ -15,6 +17,7 @@ const handler = NextAuth({
 
         try {
           const API_URL = process.env.NEXT_PUBLIC_API_URL;
+          if (!API_URL) return null;
           const res = await fetch(`${API_URL}/auth/login`, {
             method: "POST",
             body: JSON.stringify({ email: credentials.email, password: credentials.password }),
@@ -37,12 +40,21 @@ const handler = NextAuth({
           return null;
         }
       }
-    }),
+    })
+];
+
+if (googleClientId && googleClientSecret) {
+  providers.push(
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
-    }),
-  ],
+      clientId: googleClientId,
+      clientSecret: googleClientSecret,
+    })
+  );
+}
+
+const handler = NextAuth({
+  providers,
+  secret: process.env.NEXTAUTH_SECRET || "super-secret",
   callbacks: {
     async signIn({ user, account }) {
       if (account?.provider === "google") {
